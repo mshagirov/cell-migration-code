@@ -12,7 +12,7 @@ data_path = Path('../../dataDIR/maria_21072023/')
 model_path = Path('.')
 
 # number of epochs
-N_epochs = 1
+N_epochs = 30
 
 # Package versions and available devices:
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
