@@ -6,7 +6,7 @@ from pathlib import Path
 import skimage.io
 
 # Location of the dataset:
-data_path = Path('../../dataDIR/maria_21072023/')
+data_path = Path('/mnt/mbi/images/micros/murat/dataDIR/maria_21072023/dataset/')
 
 # Location to save the finetuned model:
 model_path = Path('.')
@@ -24,7 +24,6 @@ print(f"Device         : {device}")
 # RNG for frame selection
 nprng = np.random.default_rng(123)
 
-# Fn for loading traning and validation data:
 def imread2pil_train(fpath):
     '''
     read the middle frame and convert to PIL image.
@@ -44,13 +43,29 @@ def imread2pil_train(fpath):
     # now using only 2nd ch:CH1 of CH:0-2
     im = np.uint8( 255 * (im/im[:,:,:,1].max()) )
     
+    # Filter
+    # integrate CH1 along x-axis and find max inten-y ("nucleus")
+    Iy = im[...,1].sum(axis=-1).argmax(axis=1)
+    
+    # frames w/ cells >10% away from the top/bottom edge
+    mask = np.abs(Iy - im.shape[1]/2)/im.shape[1] < 0.4
+    # if possible, select frames with nuclei away from the edge (visible)
+    im = im[...,1][mask] if mask.any() else im[...,1] # only ch=1
+    
+    # Is est. avg location of nuclei on the top half (True)
+    is_top = np.mean(Iy[mask] if mask.any() else Iy) < im.shape[1]/2 # False--> bottom
+    
+    # range of y-axis to remove empty region (e.g., if is_top==True, then remove bottom)
+    y_ids = [0, min([224, im.shape[1]])] if is_top else [max([im.shape[1]-224, 0]), im.shape[1]]
+    im = im[:,y_ids[0]:y_ids[1],:]
+    
     if fpath.parents[1].name=="train":
-        # select random frame is it's training data:
+        # select random frame if it's training data:
         frame_id = nprng.integers(im.shape[0])
     else:
         # for val data use middle frame
         frame_id = im.shape[0]//2
-    return PILImage.create(im[frame_id][:,:,1])
+    return PILImage.create(im[frame_id])
 
 
 
