@@ -94,5 +94,5 @@ learn = vision_learner(dls, resnet34, metrics=error_rate)
 print(f"\n- - - - -\nTraining for {N_epochs} epochs:\n- - - - -\n")
 learn.fine_tune(N_epochs)
 
-# Save the finetunes model for later use:
-learn.save( model_path / f'resnet34_finetune_{N_epochs}')
+# Save the finetuned model for later use:
+learn.save( model_path / f'resnet34_finetune_{N_epochs}_filterempty')
